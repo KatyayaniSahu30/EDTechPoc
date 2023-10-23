@@ -1,0 +1,34 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model Registration {
+    id          Int       @id @default(autoincrement())
+    name        String
+    email       String    @unique
+    password    String
+    zipcode     String
+    address     String
+    course      String
+    is_admin    Int       @default(0)
+}
+
+model Question {
+  id          Int      @id @default(autoincrement())
+  Categories  String
+  Subject     String
+  Question    String
+  Options      Json
+  CorrectOptions Json
+}
+
+
