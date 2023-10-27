@@ -1,3 +1,4 @@
+
 // prisma/schema.prisma
 
 generator client {
@@ -22,13 +23,14 @@ model Registration {
     is_admin    Int       @default(0)
 }
 
-model Question {
-  id          Int      @id @default(autoincrement())
-  Categories  String
-  Subject     String
-  Question    String
-  Options      Json
-  CorrectOptions Json
+model Questions {
+  id                   Int       @id @default(autoincrement())
+  course               String
+  questions            String
+  options              Json
+  rightAnswers         Json
+  currentQuestionIndex Int
+  questionType         String
 }
 
 

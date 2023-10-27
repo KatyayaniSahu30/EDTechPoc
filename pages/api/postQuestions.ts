@@ -1,21 +1,30 @@
+//import libraries
 import { NextApiRequest, NextApiResponse } from 'next';
 import { PrismaClient } from '@/prisma/generated/client';
 
-
 const prisma = new PrismaClient();
-
 
 export default async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method === 'POST') {
     try {
-      const { Categories, Subject, Question, Options, CorrectOptions } = req.body;
 
+      //console.log('Request Body:', req.body); 
+    
+      const { course, questions, rightAnswers, currentQuestionIndex, questionType } = req.body;
+      console.log('req.body.questions');
+     
+      console.log('Data to be inserted:', { course, questions, rightAnswers, currentQuestionIndex, questionType }); 
 
-      // Create a new question in the database using Prisma
       const newQuestion = await prisma.questions.create({
-        data: { Categories, Subject, Question, Options, CorrectOptions },
+        data: {
+          course,
+          questions,
+          rightAnswers,
+          currentQuestionIndex,
+          questionType,
+        },
       });
-
+      
 
       res.status(201).json(newQuestion);
     } catch (error) {
@@ -26,6 +35,6 @@ export default async (req: NextApiRequest, res: NextApiResponse) => {
     res.status(405).json({ error: 'Method not allowed' });
   }
 
-
   await prisma.$disconnect();
 };
+
