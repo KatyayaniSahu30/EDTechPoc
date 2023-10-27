@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 
 type QuestionData = {
@@ -9,245 +10,180 @@ type QuestionData = {
     rightAnswer: string;
 };
 
-
-const questionsData: Record<string, QuestionData[]> = {
-    JAVA: [
-        {
-            question: 'What is Java Virtual Machine (JVM)?',
-            type: 'radio',
-            options: ['Converts Java bytecode into machine language', 'Interprets Java bytecode', 'None of the above'],
-            rightAnswer: 'Converts Java bytecode into machine language',
-        },
-        {
-            question: 'Which one is not a Java feature?',
-            type: 'checkbox',
-            options: ['Dynamic', 'Architecture Neutral', 'Use of pointers', 'Object-oriented'],
-            rightAnswer: 'Use of pointers',
-        },
-        {
-            question: 'What is the use of the System.out.println method?',
-            type: 'input',
-            options: [],
-            rightAnswer: 'To print a string in the console',
-        },
-        {
-            question: 'Is Java platform-independent?',
-            type: 'boolean',
-            options: ['True', 'False'],
-            rightAnswer: 'True',
-        },
-        // Add two more questions for each type
-        {
-            question: 'What does JDK stand for?',
-            type: 'radio',
-            options: ['Java Developer Kit', 'Java Design Kit', 'Just Development Kit'],
-            rightAnswer: 'Java Developer Kit',
-        },
-        {
-            question: 'Which keyword is used to prevent a class from being inherited?',
-            type: 'checkbox',
-            options: ['final', 'abstract', 'sealed', 'private'],
-            rightAnswer: 'final',
-        },
-        {
-            question: 'What is the default value of an instance variable?',
-            type: 'boolean',
-            options: ['0', 'null', 'depends on the type of variable', 'not initialized'],
-            rightAnswer: 'depends on the type of variable',
-        },
-    ],
-    HTML: [
-        {
-            question: 'What does HTML stand for?',
-            type: 'radio',
-            options: ['Hyperlinks and Text Markup Language', 'Hyper Text Markup Language', 'Home Tool Markup Language'],
-            rightAnswer: 'Hyper Text Markup Language',
-        },
-        {
-            question: 'Choose the correct HTML element for the largest heading:',
-            type: 'checkbox',
-            options: ['<heading>', '<h1>', '<h6>', '<head>'],
-            rightAnswer: '<h1>',
-        },
-        {
-            question: 'What does the <form> element in HTML do?',
-            type: 'input',
-            options: [],
-            rightAnswer: 'Creates an HTML form for user input',
-        },
-        {
-            question: 'Is HTML a programming language?',
-            type: 'boolean',
-            options: ['True', 'False'],
-            rightAnswer: 'False',
-        },
-    ],
-    Python: [
-        {
-            question: 'What is the output of print(2+3+"Hello")?',
-            type: 'radio',
-            options: ['5Hello', 'TypeError', 'Compilation Error', 'Hello5'],
-            rightAnswer: 'TypeError',
-        },
-        {
-            question: 'Which of the following is an invalid variable?',
-            type: 'checkbox',
-            options: ['my_string_1', '1st_string', 'foo', 'my-string'],
-            rightAnswer: '1st_string',
-        },
-        {
-            question: 'What is the output of print("Hello" * 2)?',
-            type: 'input',
-            options: [],
-            rightAnswer: 'HelloHello',
-        },
-        {
-            question: 'Is Python case-sensitive when dealing with variables?',
-            type: 'boolean',
-            options: ['True', 'False'],
-            rightAnswer: 'True',
-        },
-    ],
-    'ASP.NET': [
-        {
-            question: 'What does ASP.NET stand for?',
-            type: 'radio',
-            options: ['Active Server Pages', '.NET Framework', 'Application Service Provider', 'Active Server Page'],
-            rightAnswer: 'Active Server Pages',
-        },
-        {
-            question: 'What is the full form of ADO?',
-            type: 'checkbox',
-            options: ['ActiveX Data Objects', 'Active Data Objects', 'ActiveX Database Objects', 'ActiveX Directory Objects'],
-            rightAnswer: 'ActiveX Data Objects',
-        },
-        {
-            question: 'What is the full form of ADO?',
-            type: 'checkbox',
-            options: ['ActiveX Data Objects', 'Active Data Objects', 'ActiveX Database Objects', 'ActiveX Directory Objects'],
-            rightAnswer: 'ActiveX Data Objects',
-        },
-        {
-            question: 'What is the purpose of the web.config file in ASP.NET?',
-            type: 'input',
-            options: [],
-            rightAnswer: 'It configures ASP.NET application settings',
-        },
-        {
-            question: 'Is ASP.NET open-source?',
-            type: 'boolean',
-            options: ['True', 'False'],
-            rightAnswer: 'True',
-        },
-    ],
-};
-
-
+// Create Functional Component ViewQuestionsPage 
 const ViewQuestionsPage: React.FC = () => {
     const [selectedQuestionType, setSelectedQuestionType] = useState('');
     const [selectedCourse, setSelectedCourse] = useState('');
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [fetchedQuestions, setFetchedQuestions] = useState<QuestionData[]>([]);
 
 
     const handleQuestionTypeChange = (value: string) => {
         setSelectedQuestionType(value);
+        setCurrentQuestionIndex(0);
     };
 
 
     const handleCourseChange = (value: string) => {
         setSelectedCourse(value);
+        setCurrentQuestionIndex(0);
     };
 
 
+    const handleNextQuestion = () => {
+        setCurrentQuestionIndex((prevIndex) => prevIndex + 1);
+    };
+
+
+    const handlePreviousQuestion = () => {
+        if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex((prevIndex) => prevIndex - 1);
+        }
+    };
+
+
+    const handleDeleteQuestion = () => {
+        if (fetchedQuestions.length > 0) {
+            const updatedQuestions = fetchedQuestions.filter((question, index) => index !== currentQuestionIndex);
+            setFetchedQuestions(updatedQuestions);
+            console.log('Question deleted:', fetchedQuestions[currentQuestionIndex]);
+            alert('Question Deleted'); // Add an alert box
+        }
+    };
+
+
+    const fetchQuestions = async () => {
+        try {
+            const response = await axios.get('/api/getQuestions', {
+                params: {
+                    course: selectedCourse,
+                    type: selectedQuestionType,
+                },
+            });
+            setFetchedQuestions(response.data);
+        } catch (error) {
+            console.error('Error fetching questions:', error);
+        }
+    };
+
+
+    useEffect(() => {
+        console.log('Fetched Questions:', fetchedQuestions); // Add this console log statement
+
+
+        if (fetchedQuestions.length > 0) {
+            console.log('Current Question:', fetchedQuestions[currentQuestionIndex]); // Add this console log statement
+        }
+    }, [fetchedQuestions, currentQuestionIndex]);
+
+
     return (
-
-
-        <div style={{ margin: '0 auto', maxWidth: '600px', textAlign: 'center', paddingTop: '50px' }}>
-            {/* <h1>View Questions Page</h1> */}
-
-
-            <div style={{ margin: '10px', padding: '10px' }}>
-
-
-                <label htmlFor="course" style={{ marginBottom: '10px', fontSize: '18px', fontWeight: 'bold' }}>
-                    Select Course:
-                </label>
-                <select
-                    id="course"
-                    value={selectedCourse}
-                    onChange={(e) => handleCourseChange(e.target.value)}
-                    style={{ width: '200px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '20px' }}
-                >
-                    <option value="">Select Course</option>
-                    <option value="JAVA">JAVA</option>
-                    <option value="HTML">HTML</option>
-                    <option value="Python">Python</option>
-                    <option value="ASP.NET">ASP.NET</option>
-                </select>
-            </div>
-
-
-            <div style={{ margin: '10px', padding: '10px' }}>
-                <label htmlFor="questionType" style={{ marginBottom: '10px', fontSize: '18px', fontWeight: 'bold' }}>
-                    Select Question Type:
-                </label>
-                <select
-                    id="questionType"
-                    value={selectedQuestionType}
-                    onChange={(e) => handleQuestionTypeChange(e.target.value)}
-                    style={{ width: '200px', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', marginBottom: '20px' }}
-                >
-                    <option value="">Select Question Type</option>
-                    <option value="radio">Radio Button</option>
-                    <option value="checkbox">Checkbox</option>
-                    <option value="boolean">Boolean (True/False)</option>
-                    <option value="input">Input Field</option>
-                </select>
-            </div>
-
-
-            {selectedCourse && selectedQuestionType && questionsData[selectedCourse].map((question, index) => {
-                if (question.type === selectedQuestionType) {
-                    return (
-                        <div key={index} style={{ marginBottom: '20px', border: '1px solid #ccc', padding: '20px', borderRadius: '5px' }}>
-                            <h3>{question.question}</h3>
-                            {question.type === 'radio' && question.options && question.options.length > 0 && (
-                                <div>
-                                    {question.options.map((option, optionIndex) => (
-                                        <div key={optionIndex}>
-                                            <input type="radio" id={option} name={question.question} value={option} />
-                                            <label htmlFor={option}>{option}</label>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                            {question.type === 'checkbox' && question.options && question.options.length > 0 && (
-                                <div>
-                                    {question.options.map((option, optionIndex) => (
-                                        <div key={optionIndex}>
-                                            <input type="checkbox" id={option} name={option} value={option} />
-                                            <label htmlFor={option}>{option}</label>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                            {question.type === 'boolean' && (
-                                <div>
-                                    <input type="radio" id="true" name={question.question} value="true" />
-                                    <label htmlFor="true">True</label>
-                                    <input type="radio" id="false" name={question.question} value="false" />
-                                    <label htmlFor="false">False</label>
-                                </div>
-                            )}
-                            {question.type === 'input' && <input type="text" />}
-                            <div style={{ marginTop: '10px' }}>
-                                <label>Right Answer:</label>
-                                <input type="text" value={question.rightAnswer} disabled style={{ marginLeft: '10px', padding: '5px' }} />
+        <div className="container mx-auto mt-20 p-6 border rounded-lg shadow-lg bg-gradient-to-r from-sky-300 via-purple-400 to-red-400 w-5/12">
+            <h1 className="text-4xl mb-6 text-center font-bold hover:text-red-500 text-purple-800">
+                VIEW <span className="bg-gradient-to-r font-black from-sky-500 via-purple-600 to-red-500 text-transparent bg-clip-text"> QUIZ </span> QUESTIONS
+            </h1>
+            <form className="grid grid-cols-1 gap-4">
+                <div className="flex flex-row">
+                    <div className="flex-1 p-5">
+                        <label htmlFor="course" className="mb-5 text-2xl font-bold block">
+                            Select Course:
+                        </label>
+                        <select
+                            id="course"
+                            value={selectedCourse}
+                            onChange={(e) => handleCourseChange(e.target.value)}
+                            className="w-80 p-2 border rounded-md"
+                        >
+                            <option value="">Select Course</option>
+                            <option value="JAVA">JAVA</option>
+                            <option value="HTML">HTML</option>
+                            <option value="Python">Python</option>
+                            <option value="ASP.NET">ASP.NET</option>
+                        </select>
+                    </div>
+                    <div className="flex-1 p-5">
+                        <label htmlFor="questionType" className="mb-5 text-2xl font-bold block">
+                            Select Question Type:
+                        </label>
+                        <select
+                            id="questionType"
+                            value={selectedQuestionType}
+                            onChange={(e) => handleQuestionTypeChange(e.target.value)}
+                            className="w-80 p-2 border rounded-md"
+                        >
+                            <option value="">Select Question Type</option>
+                            <option value="radio">Radio</option>
+                            <option value="checkbox">Checkbox</option>
+                            <option value="input">Input</option>
+                            <option value="boolean">Boolean</option>
+                        </select>
+                    </div>
+                </div>
+                {fetchedQuestions.length > 0 && (
+                    <div className="mb-5 border rounded-lg p-5">
+                        <h3>{fetchedQuestions[currentQuestionIndex].question}</h3>
+                        {fetchedQuestions[currentQuestionIndex].options && fetchedQuestions[currentQuestionIndex].options.map((option, optionIndex) => (
+                            <div key={optionIndex}>
+                                {fetchedQuestions[currentQuestionIndex].type === 'radio' && (
+                                    <div>
+                                        <input type="radio" id={option} name={fetchedQuestions[currentQuestionIndex].question} value={option} />
+                                        <label htmlFor={option} className="p-3">
+                                            {option}
+                                        </label>
+                                    </div>
+                                )}
+                                {fetchedQuestions[currentQuestionIndex].type === 'checkbox' && (
+                                    <div>
+                                        <input type="checkbox" id={option} name={option} value={option} />
+                                        <label htmlFor={option} className="p-3">
+                                            {option}
+                                        </label>
+                                    </div>
+                                )}
                             </div>
+                        ))}
+                        {fetchedQuestions[currentQuestionIndex].type === 'boolean' && (
+                            <div>
+                                <input type="radio" id="true" name={fetchedQuestions[currentQuestionIndex].question} value="true" className="p-15" />
+                                <label htmlFor="true" className="mr-5">
+                                    True
+                                </label>
+                                <input type="radio" id="false" name={fetchedQuestions[currentQuestionIndex].question} value="false" className="p-15" />
+                                <label htmlFor="false">False</label>
+                            </div>
+                        )}
+                        {fetchedQuestions[currentQuestionIndex].type === 'input' && <input type="text" className="mt-5 w-96" />}
+                        <div className="mt-10">
+                            <label>Right Answer:</label>
+                            <input
+                                type="text"
+                                value={fetchedQuestions[currentQuestionIndex].rightAnswer}
+                                disabled
+                                className="ml-10 p-2 w-96"
+                            />
                         </div>
-                    );
-                }
-                return null;
-            })}
+                    </div>
+                )}
+
+
+                <div className="flex justify-between">
+                    {currentQuestionIndex > 0 && (
+                        <button onClick={handlePreviousQuestion} className="w-24 p-3 bg-blue-500 text-white font-bold rounded-lg mt-5">
+                            Previous
+                        </button>
+                    )}
+                    {currentQuestionIndex < fetchedQuestions.length - 1 && (
+                        <button onClick={handleNextQuestion} className="w-24 p-3 bg-blue-500 text-white font-bold rounded-lg mt-5">
+                            Next
+                        </button>
+                    )}
+                    <div className="flex justify-end">
+                        <button onClick={handleDeleteQuestion} className="w-24 p-3 bg-red-500 text-white font-bold rounded-lg mt-5">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     );
 };

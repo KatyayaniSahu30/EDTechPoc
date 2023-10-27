@@ -9,8 +9,7 @@ const AddQuestion: React.FC = () => {
     const [rightAnswers, setRightAnswers] = useState(['']);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [questionType, setQuestionType] = useState('radio');
-    const [marks, setMarks] = useState(2);
-
+    // const [marks, setMarks] = useState(2);
 
     // Function to add an option to a question
     const handleAddOption = (index: number) => {
@@ -70,52 +69,46 @@ const AddQuestion: React.FC = () => {
         } else {
             const data = {
                 course,
-                questions,
-                marks,
+                questions: questions.map((q) => ({
+                    question: q.question,
+                    options: JSON.stringify(q.options), // Convert the options array to a string
+                })),
                 rightAnswers,
                 currentQuestionIndex,
-                questionType
+                questionType,
             };
 
             // Log the data before sending
             console.log('Data to be sent:', data);
 
-            // Add a new question to the questions array
-            setQuestions([...questions, { question: '', options: [''] }]);
-            setCurrentQuestionIndex(questions.length); // Set the question index to the new value
-            setRightAnswers([]); // Reset the right answers
-            setCourse(''); // Reset the course
-            setQuestionType('');
-            setMarks(2);
-
-            // Show an alert box to confirm submission
-            // const confirmSubmit = window.confirm('Do you want to submit the data?');
-            // if (confirmSubmit) {
-            //     // Send the data to the server
-            //     fetch('/api/postQuestions', {
-            //         method: 'POST',
-            //         headers: {
-            //             'Content-Type': 'application/json',
-            //         },
-            //         body: JSON.stringify(data),
-            //     })
-            //         .then((response) => response.json())
-            //         .then((data) => {
-            //             console.log('Success:', data);
-            //             // Add a new question for the next round
-            //             setQuestions([...questions, { question: '', options: [''] }]);
-            //             // Set Marks
-            //             setMarks(0);
-            //             setCurrentQuestionIndex(questions.length); // Set the question index to the new value
-            //             setRightAnswers([]); // Reset the right answers
-            //             setCourse(''); // Reset the course
-            //             setQuestionType('radio'); // Reset the question type
-            //             window.location.reload(); // Reload the page
-            //         })
-            //         .catch((error) => {
-            //             console.error('Error:', error);
-            //         });
-            // }
+            //Show an alert box to confirm submission
+            const confirmSubmit = window.confirm('Do you want to submit the data?');
+            if (confirmSubmit) {
+                // Send the data to the server
+                fetch('/api/postQuestions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                })
+                    .then((response) => response.json())
+                    .then((data) => {
+                        console.log('Success:', data);
+                        // Add a new question for the next round
+                        setQuestions([...questions, { question: '', options: [''] }]);
+                        // Set Marks
+                        //setMarks(0);
+                        setCurrentQuestionIndex(questions.length); // Set the question index to the new value
+                        setRightAnswers([]); // Reset the right answers
+                        setCourse(''); // Reset the course
+                        setQuestionType('radio'); // Reset the question type
+                        //window.location.reload(); // Reload the page
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+            }
 
         }
     };
@@ -133,63 +126,53 @@ const AddQuestion: React.FC = () => {
             {/* Form for adding questions */}
             <div className="container mx-auto mt-0 p-6 border rounded-lg shadow-lg bg-gradient-to-r from-sky-300 via-purple-400 to-red-400 w-5/12">
                 <form className="grid grid-cols-1 gap-4">
+
                     {/* Dropdown to select course */}
-                    <div className="flex flex-col mb-4">
-                        <label htmlFor="course" className="mb-2 text-md font-bold">
-                            Select Course:
-                        </label>
-                        <select
-                            id="course"
-                            value={course}
-                            onChange={(e) => setCourse(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded mb-4"
-                        >
-                            <option value="">Select Course</option>
-                            <option value="JAVA">JAVA</option>
-                            <option value="ASP.NET">ASP.NET</option>
-                            <option value="Python">Python</option>
-                        </select>
+                    <div className="flex flex-row mb-4">
+                        <div className="w-1/2 pr-2">
+                            <label htmlFor="course" className="mb-2 text-md font-bold">
+                                Select Course:
+                            </label>
+                            <select
+                                id="course"
+                                value={course}
+                                onChange={(e) => setCourse(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded mb-4"
+                            >
+                                <option value="">Select Course</option>
+                                <option value="JAVA">JAVA</option>
+                                <option value="ASP.NET">ASP.NET</option>
+                                <option value="Python">Python</option>
+                            </select>
+                        </div>
+
+                        <div className="w-1/2 pl-2">
+                            <label htmlFor="questionType" className="mb-2 text-md font-bold">
+                                Question Type:
+                            </label>
+                            {/* Dropdown to select question type */}
+                            <select
+                                id="questionType"
+                                value={questionType}
+                                onChange={(e) => handleQuestionTypeChange(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded mb-4"
+                            >
+                                <option value="radio">Radio Button</option>
+                                <option value="checkbox">Checkbox</option>
+                                <option value="boolean">Boolean (True/False)</option>
+                                <option value="input">Input Field</option>
+                            </select>
+                        </div>
                     </div>
 
-                    {/* Dropdown to select question type */}
-                    <div className="flex flex-col mb-4">
-                        <label htmlFor="questionType" className="mb-2 text-md font-bold">
-                            Question Type:
-                        </label>
-                        <select
-                            id="questionType"
-                            value={questionType}
-                            onChange={(e) => handleQuestionTypeChange(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded mb-4"
-                        >
-                            <option value="radio">Radio Button</option>
-                            <option value="checkbox">Checkbox</option>
-                            <option value="boolean">Boolean (True/False)</option>
-                            <option value="input">Input Field</option>
-                        </select>
-                    </div>
 
                     {/* Input for the current question */}
                     <div className="flex flex-col mb-4">
-
-                        {/* <label htmlFor={`question`} className="mb-2 text-md font-bold">
-                            Question {currentQuestionIndex + 1}:
-                        </label>
-                        <div className="flex flex-row mb-2 justify-end">
-                            <label htmlFor={`marks`} className="mr-2 text-md font-bold">
-                                Marks:
-                            </label>
-                            <span id={`marks`} className="font-bold">
-                                2
-                            </span>
-                        </div> */}
 
                         <label htmlFor={`question`} className="mb-2 text-md font-bold flex justify-between">
                             <span>Question {currentQuestionIndex + 1}:</span>
                             <span className="text-md font-bold">Marks: 2</span>
                         </label>
-
-
 
                         <textarea
                             id={`question`}
@@ -202,8 +185,6 @@ const AddQuestion: React.FC = () => {
                             }}
                             className="w-full p-2 border border-gray-300 rounded mb-4"
                         />
-
-
 
                         {/* Options for the current question */}
 
